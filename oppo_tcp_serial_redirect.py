@@ -12,7 +12,18 @@ import serial
 import serial.threaded
 import time
 
+class OppoSerialToNet(serial.threaded.Packetizer):
+    """
+    Read and write (Unicode) lines from/to OPPO Player serial port.
+    """
 
+    TERMINATOR = b'\r'
+
+    def handle_packet(self, packet):
+        if self.transport is not None:
+            self.transport.write(packet + self.TERMINATOR + '\n')
+
+    
 class SerialToNet(serial.threaded.Protocol):
     """serial->socket"""
 
@@ -138,7 +149,7 @@ it waits for the next connect.
         sys.stderr.write('Could not open serial port {}: {}\n'.format(ser.name, e))
         sys.exit(1)
 
-    ser_to_net = SerialToNet()
+    ser_to_net = OppoSerialToNet()
     serial_worker = serial.threaded.ReaderThread(ser, ser_to_net)
     serial_worker.start()
 
@@ -184,7 +195,7 @@ it waits for the next connect.
                         data = client_socket.recv(1024)
                         if not data:
                             break
-                        ser.write(data+'\r\n')                 # get a bunch of bytes and send them
+                        ser.write(data+'\r')                 # get a bunch of bytes and send them
                     except socket.error as msg:
                         if args.develop:
                             raise
