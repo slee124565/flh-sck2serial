@@ -19,6 +19,9 @@ class OppoSerialToNet(serial.threaded.Packetizer):
 
     TERMINATOR = b'\r'
 
+    def __call__(self):
+        return self
+
     def handle_packet(self, packet):
         if self.transport is not None:
             self.transport.write(packet + self.TERMINATOR + '\n')
