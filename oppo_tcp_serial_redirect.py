@@ -23,8 +23,15 @@ class OppoSerialToNet(serial.threaded.Packetizer):
         return self
 
     def handle_packet(self, packet):
-        if self.transport is not None:
-            self.transport.write(packet + self.TERMINATOR + '\n')
+        if self.socket is not None:
+            self.socket.sendall(packet)
+
+    def write_line(self, text):
+        """
+        Write text to the transport and the carrage return (CR) is append.
+        """
+        # + is not the best choice but bytes does not support % or .format in py3 and we want a single write call
+        self.transport.write(text + self.TERMINATOR)
 
     
 class SerialToNet(serial.threaded.Protocol):
