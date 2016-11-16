@@ -1,7 +1,7 @@
 #!/bin/bash -x
 
 FILE_PATH=$(echo $(cd $(dirname "$0") && pwd -P)/$(basename "$0"))
-BASEDIR=$(dirname "$(dirname "${FILE_PATH}")")
+BASEDIR=$(dirname "${FILE_PATH}")
 echo "BASEDIR: ${BASEDIR}"
 
 get_pid_by_name() {
@@ -14,5 +14,5 @@ PYTHON_EXE=/root/Env/sck2serial/bin/python
 browser_pid=$(get_pid_by_name ${TARGET_PROC_NAME})
 if [ -z "${browser_pid}" ]; then
     sudo echo `date` >> /var/watchdog.log
-    ${PYTHON_EXE} ${BASEDIR}/oppo_tcp_serial_redirect.py --develop -P 9000 /dev/ttyUSB0 9600 &
+    ${PYTHON_EXE} ${BASEDIR}/oppo_tcp_serial_redirect.py --develop -P 9000 /dev/ttyUSB0 9600 >> /var/log/oppo/oppo_s2s.log 2>&1 &
 fi
