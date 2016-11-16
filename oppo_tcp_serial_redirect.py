@@ -24,7 +24,8 @@ class OppoSerialToNet(serial.threaded.Packetizer):
 
     def handle_packet(self, packet):
         if self.socket is not None:
-            self.socket.sendall('OPPO:' + packet + '\n')
+            sys.stdout.write('handle packet len: ' + len(packet) + ',' + packet)
+            self.socket.sendall(packet + '\n')
 
     def write_line(self, text):
         """
