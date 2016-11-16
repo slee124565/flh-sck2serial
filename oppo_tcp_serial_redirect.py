@@ -24,8 +24,7 @@ class OppoSerialToNet(serial.threaded.Packetizer):
 
     def handle_packet(self, packet):
         if self.socket is not None:
-            sys.stdout.write('handle packet len: ' + len(packet) + ',' + packet)
-            self.socket.sendall(packet + '\n')
+            self.socket.sendall(packet + self.TERMINATOR)
 
     def write_line(self, text):
         """
@@ -206,7 +205,7 @@ it waits for the next connect.
                         data = client_socket.recv(1024)
                         if not data:
                             break
-                        ser.write(data+'\r')                 # get a bunch of bytes and send them
+                        ser.write(data)                 # get a bunch of bytes and send them
                     except socket.error as msg:
                         if args.develop:
                             raise
