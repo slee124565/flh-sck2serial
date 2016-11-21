@@ -34,7 +34,7 @@ class OppoSerialToNet(serial.threaded.Packetizer):
             if self.socket is not None:
                 self.socket.sendall(packet + self.TERMINATOR)
 
-    def write_line(self, text):
+    def write_serial(self, text):
         """
         Write text to the transport and the carrage return (CR) is append.
         """
@@ -50,6 +50,7 @@ class OppoSerialToNet(serial.threaded.Packetizer):
             self.query_cmd = '#QPW'
             self.transport.write(query_cmd + self.TERMINATOR)
         else:
+            text = text.strip('\r\n')
             sys.stderr.write('cmd ' + text + ', len: ' + str(len(text)))
             self.custom_cmd = ''
             self.query_cmd = ''
@@ -246,7 +247,8 @@ it waits for the next connect.
                         data = client_socket.recv(1024)
                         if not data:
                             break
-                        ser.write(data)                 # get a bunch of bytes and send them
+                        #ser.write(data)                 # get a bunch of bytes and send them
+                        ser_to_net.write_serial(data)
                     except socket.error as msg:
                         if args.develop:
                             raise
