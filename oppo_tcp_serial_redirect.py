@@ -38,7 +38,8 @@ class OppoSerialToNet(serial.threaded.Packetizer):
         """
         Write text to the transport and the carrage return (CR) is append.
         """
-        
+
+        text = text.strip('\r\n')        
         # handle custome command: need to check oppo current status, 
         # then send the suitable command in class function handle_custom_cmd
         if text in ['#POWON', '#POWOFF']:
@@ -48,10 +49,9 @@ class OppoSerialToNet(serial.threaded.Packetizer):
             sys.stderr.write('handle custome command ' + text + '\n')
             self.custom_cmd = text
             self.query_cmd = '#QPW'
-            self.transport.write(query_cmd + self.TERMINATOR)
+            self.transport.write(self.query_cmd + self.TERMINATOR)
         else:
-            text = text.strip('\r\n')
-            sys.stderr.write('cmd ' + text + ', len: ' + str(len(text)))
+            sys.stderr.write('cmd ' + text + ', len: ' + str(len(text)) + '\n')
             self.custom_cmd = ''
             self.query_cmd = ''
             # + is not the best choice but bytes does not support % or .format in py3 and we want a single write call
@@ -61,12 +61,12 @@ class OppoSerialToNet(serial.threaded.Packetizer):
         if not 'OK' in packetText:
             # check query_cmd result is OK
             # re-send query_cmd if result is NOT OK
-            self.transport.write(query_cmd + self.TERMINATOR)
+            self.transport.write(self.query_cmd + self.TERMINATOR)
         else:
             if self.custom_cmd in ['#POWON', '#POWOFF']:
-                self.handle_custom_power_cmd(powerCmd, packetText)
+                self.handle_custom_power_cmd(self.custom_cmd, packetText)
         
-    def handle_custom_power_cmd(pwdCmd, pwdState):
+    def handle_custom_power_cmd(self, pwdCmd, pwdState):
         # check oppo power state and send oppo power cmd if need
         if (pwdCmd == '#POWON' and pwdState == '@OK OFF') or \
             (pwdCmd == '#POWOFF' and pwdState == '@OK ON'):
