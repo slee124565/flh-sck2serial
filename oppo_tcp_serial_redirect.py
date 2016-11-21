@@ -19,18 +19,23 @@ class OppoSerialToNet(serial.threaded.Packetizer):
 
     TERMINATOR = b'\r'
     
-    handle_custom_cmd = False
     custom_cmd = ''
     query_cmd = ''
+    power_state_checking = False
 
     def __call__(self):
         return self
 
     def handle_packet(self, packet):
         
-        sys.stderr.write('handle packet %s (%s)\n' % (packet, ','.join([str(hex(c)) for c in packet])))
+        if (packet != '@OK'):
+            sys.stderr.write('handle packet %s (%s)\n' % (packet, ','.join([str(hex(c)) for c in packet])))
+            
         if self.custom_cmd != '':
-            self.handle_custom_cmd(packet)
+            if not self.power_state_checking:
+                self.handle_custom_cmd(packet)
+            else:
+                self.check_custom_power_cmd_result(self.custom_cmd,packet)
         else:
             if self.socket is not None:
                 self.socket.sendall(packet + self.TERMINATOR + '\n')
@@ -49,17 +54,21 @@ class OppoSerialToNet(serial.threaded.Packetizer):
             # custom command: POWON and POWOFF
             # POWON : make sure oppo will be ture on
             # POWOFF : make user oppo will be turn off
-            sys.stderr.write('handle custome command %s %s\n' % (text,str(ord(text[-1]))))
             self.custom_cmd = text
             self.query_cmd = '#QPW'
             self.transport.write(self.query_cmd + self.TERMINATOR)
         else:
-            sys.stderr.write('cmd ' + text + ', len: ' + str(len(text)) + '\n')
             self.custom_cmd = ''
             self.query_cmd = ''
             # + is not the best choice but bytes does not support % or .format in py3 and we want a single write call
             self.transport.write(text + self.TERMINATOR)
 
+    def set_verbose_mode_off(self):
+        '''
+        trun off the oppo verbose mode
+        '''
+        self.transport.write('SVM 0' + self.TERMINATOR)
+        
     def handle_custom_cmd(self, packetText):
         if not 'OK' in packetText:
             # check query_cmd result is OK
@@ -68,16 +77,39 @@ class OppoSerialToNet(serial.threaded.Packetizer):
         else:
             if self.custom_cmd in ['#POWON', '#POWOFF']:
                 self.handle_custom_power_cmd(self.custom_cmd, packetText)
+            else:
+                sys.stderr.write('unknow custom cmd %s\n' % self.custom_cmd)
+                self.reset_custom_cmd_meta()
         
     def handle_custom_power_cmd(self, pwdCmd, pwdState):
         # check oppo power state and send oppo power cmd if need
         if (pwdCmd == '#POWON' and pwdState == '@OK OFF') or \
             (pwdCmd == '#POWOFF' and pwdState == '@OK ON'):
             self.transport.write('#POW' + self.TERMINATOR)
- 
-       # clean up variables for custom cmd handling
+            self.power_state_checking = True
+        else:
+            # clean up variables for custom cmd handling
+            sys.stderr.write('power state %s, skip sending power cmd %s\n' % (pwdState, pwdCmd))
+            self.reset_custom_cmd_meta()
+        
+    def check_custom_power_cmd_result(self, pwdCmd, pwdState):
+        # check power cmd result and re-send if fail
+        if (pwdCmd == '#POWON' and 'ON' in pwdState) or \
+            (pwdCmd == '#POWOFF' and 'OFF' in pwdState):
+            sys.stderr.write('power cmd %s finished' % pwdCmd)
+            self.reset_custom_cmd_meat()
+        else:
+            sys.stderr.write('power cmd %s retry' % pwdCmd)
+            self.transport.write('#POW' + self.TERMINATOR)
+    
+    def reset_custom_cmd_meta(self):
         self.custom_cmd = ''
         self.query_cmd = ''
+        self.power_state_checking = False
+        
+    def write_socket(self, data):
+        self.socket.sendall(data + '\n')
+        
     
 class SerialToNet(serial.threaded.Protocol):
     """serial->socket"""
@@ -245,13 +277,17 @@ it waits for the next connect.
             try:
                 ser_to_net.socket = client_socket
                 # enter network <-> serial loop
+                ser_to_net.set_verbose_mode_off()
                 while True:
                     try:
                         data = client_socket.recv(1024)
                         if not data:
                             break
                         #ser.write(data)                 # get a bunch of bytes and send them
-                        ser_to_net.write_serial(data)
+                        if ser_to_net.power_state_checking:
+                            ser_to_net.write_socket('@BUSY')
+                        else:
+                            ser_to_net.write_serial(data)
                     except socket.error as msg:
                         if args.develop:
                             raise
