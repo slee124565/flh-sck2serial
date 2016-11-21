@@ -38,7 +38,7 @@ class OppoSerialToNet(serial.threaded.Packetizer):
                 self.check_custom_power_cmd_result(self.custom_cmd,packet)
         else:
             if self.socket is not None:
-                self.socket.sendall(packet + self.TERMINATOR + '\n')
+                self.socket.sendall(packet + '\n')
 
     def write_serial(self, text):
         """
@@ -83,24 +83,33 @@ class OppoSerialToNet(serial.threaded.Packetizer):
         
     def handle_custom_power_cmd(self, pwdCmd, pwdState):
         # check oppo power state and send oppo power cmd if need
-        if (pwdCmd == '#POWON' and pwdState == '@OK OFF') or \
-            (pwdCmd == '#POWOFF' and pwdState == '@OK ON'):
+        if (pwdCmd == '#POWON' and pwdState.find('@OK OFF') >= 0) or \
+            (pwdCmd == '#POWOFF' and pwdState.find('@OK ON') >= 0):
             self.transport.write('#POW' + self.TERMINATOR)
             self.power_state_checking = True
+            time.sleep(3)
         else:
-            # clean up variables for custom cmd handling
-            sys.stderr.write('power state %s, skip sending power cmd %s\n' % (pwdState, pwdCmd))
-            self.reset_custom_cmd_meta()
+            if (pwdCmd == '#POWON' and pwdState.find('@OK ON') >= 0) or \
+                (pwdCmd == '#POWOFF' and pwdState.find('@OK OFF') >= 0):
+                # clean up variables for custom cmd handling
+                sys.stderr.write('power state %s, skip sending power cmd %s\n' % (pwdState, pwdCmd))
+                self.reset_custom_cmd_meta()
+            else:
+                sys.stderr.write('power state %s unknow, reset query cmd\n' % pwdState)
+                self.transport.write(self.query_cmd + self.TERMINATOR)
         
     def check_custom_power_cmd_result(self, pwdCmd, pwdState):
         # check power cmd result and re-send if fail
-        if (pwdCmd == '#POWON' and 'ON' in pwdState) or \
-            (pwdCmd == '#POWOFF' and 'OFF' in pwdState):
-            sys.stderr.write('power cmd %s finished' % pwdCmd)
-            self.reset_custom_cmd_meat()
+        if (pwdCmd == '#POWON' and pwdState.find('@OK ON') >= 0) or \
+            (pwdCmd == '#POWOFF' and pwdState.find('@OK OFF') >= 0):
+            sys.stderr.write('power cmd %s finished\n' % pwdCmd)
+            self.reset_custom_cmd_meta()
+            if self.socket is not None:
+                self.socket.sendall(pwdState + '\n')
         else:
-            sys.stderr.write('power cmd %s retry' % pwdCmd)
+            sys.stderr.write('power cmd %s retry\n' % pwdCmd)
             self.transport.write('#POW' + self.TERMINATOR)
+            time.sleep(1)
     
     def reset_custom_cmd_meta(self):
         self.custom_cmd = ''
