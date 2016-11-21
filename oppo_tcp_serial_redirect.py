@@ -28,25 +28,28 @@ class OppoSerialToNet(serial.threaded.Packetizer):
 
     def handle_packet(self, packet):
         
+        sys.stderr.write('handle packet %s (%s)\n' % (packet, ','.join([str(hex(c)) for c in packet])))
         if self.custom_cmd != '':
             self.handle_custom_cmd(packet)
         else:
             if self.socket is not None:
-                self.socket.sendall(packet + self.TERMINATOR)
+                self.socket.sendall(packet + self.TERMINATOR + '\n')
 
     def write_serial(self, text):
         """
         Write text to the transport and the carrage return (CR) is append.
         """
 
-        text = text.strip('\r\n')        
+        text = text.strip('\r\n').strip('\r').strip('\n').strip()
+        if len(text) > 1:        
+            sys.stderr.write('write serial %s, %d\n' % (text,ord(text[-1])))
         # handle custome command: need to check oppo current status, 
         # then send the suitable command in class function handle_custom_cmd
         if text in ['#POWON', '#POWOFF']:
             # custom command: POWON and POWOFF
             # POWON : make sure oppo will be ture on
             # POWOFF : make user oppo will be turn off
-            sys.stderr.write('handle custome command ' + text + '\n')
+            sys.stderr.write('handle custome command %s %s\n' % (text,str(ord(text[-1]))))
             self.custom_cmd = text
             self.query_cmd = '#QPW'
             self.transport.write(self.query_cmd + self.TERMINATOR)
