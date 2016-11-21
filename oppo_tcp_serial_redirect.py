@@ -18,21 +18,57 @@ class OppoSerialToNet(serial.threaded.Packetizer):
     """
 
     TERMINATOR = b'\r'
+    
+    handle_custom_cmd = False
+    custom_cmd = ''
+    query_cmd = ''
 
     def __call__(self):
         return self
 
     def handle_packet(self, packet):
-        if self.socket is not None:
-            self.socket.sendall(packet + self.TERMINATOR)
+        
+        if custom_cmd != '':
+            self.handle_custom_cmd(packet)
+        else:
+            if self.socket is not None:
+                self.socket.sendall(packet + self.TERMINATOR)
 
     def write_line(self, text):
         """
         Write text to the transport and the carrage return (CR) is append.
         """
-        # + is not the best choice but bytes does not support % or .format in py3 and we want a single write call
-        self.transport.write(text + self.TERMINATOR)
+        
+        # handle custome command: need to check oppo current status, 
+        # then send the suitable command in class function handle_custom_cmd
+        if text in ['POWON', 'POWOFF']:
+            # custom command: POWON and POWOFF
+            # POWON : make sure oppo will be ture on
+            # POWOFF : make user oppo will be turn off
+            custom_cmd = text
+            query_cmd = 'QPW'
+            self.transport.write(query_cmd + self.TERMINATOR)
+        else:
+            custom_cmd = ''
+            query_cmd = ''
+            # + is not the best choice but bytes does not support % or .format in py3 and we want a single write call
+            self.transport.write(text + self.TERMINATOR)
 
+    def handle_custom_cmd(self, packetText):
+        if not 'OK' in packetText:
+            # check query_cmd result is OK
+            # re-send query_cmd if result is NOT OK
+            self.transport.write(query_cmd + self.TERMINATOR)
+        else:
+            if custom_cmd in ['POWON', 'POWOFF']:
+                self.handle_custom_power_cmd(powerCmd, packetText)
+        
+    def handle_custom_power_cmd(pwdCmd, pwdState):
+        # check oppo power state and send oppo power cmd if need
+        if (pwdCmd == 'POWON' and pwdState == 'OK OFF') or
+            (pwdCmd == 'POWOFF' and pwdState == 'OK ON'):
+            self.transport.write('POW' + self.TERMINATOR)
+        
     
 class SerialToNet(serial.threaded.Protocol):
     """serial->socket"""
