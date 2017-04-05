@@ -24,6 +24,7 @@ class SerialToNet(serial.threaded.Protocol):
 
     def data_received(self, data):
         if self.socket is not None:
+            sys.stderr.write('data_received len %s' % len(data))
             self.socket.sendall(data)
 
 
