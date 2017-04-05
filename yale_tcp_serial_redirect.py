@@ -51,7 +51,7 @@ it waits for the next connect.
         type=int,
         nargs='?',
         help='set baud rate, default: %(default)s',
-        default=9600)
+        default=19200)
 
     parser.add_argument(
         '-q', '--quiet',
@@ -186,6 +186,12 @@ it waits for the next connect.
                         data = client_socket.recv(1024)
                         if not data:
                             break
+                        if data == '':
+                            sys.stderr.write('send door status check command\n')
+                            data = bytearray([0x05,0x91,0x01,0x11,0x81,0x0f]) 
+                            
+                        data_hex = ','.join('{:02x}'.format(ord(x)) for x in data)
+                        sys.stderr.write('client_socket.recv: %s\n' % data_hex)
                         ser.write(data+'\r\n')                 # get a bunch of bytes and send them
                     except socket.error as msg:
                         if args.develop:
