@@ -9,6 +9,7 @@
 import sys
 import socket
 import serial
+import serial.rs485
 import serial.threaded
 import time
 
@@ -122,6 +123,7 @@ it waits for the next connect.
     ser.parity = args.parity
     ser.rtscts = args.rtscts
     ser.xonxoff = args.xonxoff
+    ser.rs485_mode = serial.rs485.RS485Settings()
 
     if args.rts is not None:
         ser.rts = args.rts
