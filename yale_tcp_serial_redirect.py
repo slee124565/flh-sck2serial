@@ -190,7 +190,7 @@ it waits for the next connect.
                             sys.stderr.write('send door status check command\n')
                             data = bytearray([0x05,0x91,0x01,0x11,0x81,0x0f]) 
                             
-                        data_hex = ','.join('{:02x}'.format(ord(x)) for x in data)
+                        data_hex = ','.join('{:02x}'.format(x) for x in data)
                         sys.stderr.write('client_socket.recv: %s\n' % data_hex)
                         ser.write(data)                 # get a bunch of bytes and send them
                     except socket.error as msg:
