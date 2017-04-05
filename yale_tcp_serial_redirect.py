@@ -9,7 +9,6 @@
 import sys
 import socket
 import serial
-import serial.rs485
 import serial.threaded
 import time
 
@@ -118,13 +117,11 @@ it waits for the next connect.
     args = parser.parse_args()
 
     # connect to serial port
-    ser = serial.rs485.RS485()
-    ser.port = args.SERIALPORT
+    ser = serial.serial_for_url(args.SERIALPORT, do_not_open=True)
     ser.baudrate = args.BAUDRATE
     ser.parity = args.parity
     ser.rtscts = args.rtscts
     ser.xonxoff = args.xonxoff
-    ser.rs485_mode = serial.rs485.RS485Settings()
 
     if args.rts is not None:
         ser.rts = args.rts
