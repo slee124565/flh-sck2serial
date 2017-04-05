@@ -118,7 +118,7 @@ it waits for the next connect.
     args = parser.parse_args()
 
     # connect to serial port
-    ser = serial.serial_for_url(args.SERIALPORT, do_not_open=True)
+    ser = serial.rs485.RS485(serial.serial_for_url(args.SERIALPORT, do_not_open=True))
     ser.baudrate = args.BAUDRATE
     ser.parity = args.parity
     ser.rtscts = args.rtscts
