@@ -15,7 +15,7 @@ import time
 
 class SerialToNet(serial.threaded.Protocol):
     """serial->socket"""
-    data_hex = ''
+    data_buffer = []
 
     def __init__(self):
         self.socket = None
@@ -25,12 +25,14 @@ class SerialToNet(serial.threaded.Protocol):
 
     def data_received(self, data):
         if self.socket is not None:
-            self.data_hex += ','.join('{:02x}'.format(ord(x)) for x in data)
-            sys.stderr.write('self.data_hex: %s' % self.data_hex)
-            if len(self.data_hex.split(',')) >= 32:
-                output_hex = ','.join(self.data_hex.split(',')[:32])
-                self.data_hex = ','.join(self.data_hex[32:])
-                sys.stderr.write('data_received hex string %s\n' % output_hex)
+            for x in data:
+                self.data_buffer.append(ord(x))
+            if len(self.data_buffer) >= 32:
+                output_hex = ','.join('{:02x}'.format(x) for x in self.data_buffer[:32])
+                sys.stderr.write('pms output: %s' % output_hex)
+                self.data_buffer = self.data_buffer[32:]
+                keep_hex = ','.join('{:02x}'.format(x) for x in self.data_buffer)
+                sys.stderr.write('keep hex: %s' % keep_hex)
             self.socket.sendall(data)
 
 
