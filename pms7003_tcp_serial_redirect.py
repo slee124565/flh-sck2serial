@@ -195,7 +195,12 @@ it waits for the next connect.
                             break
                         if data == '\r\n':
                             sys.stderr.write('set normal mode command\n')
-                            data = bytearray([0x42,0x4d,0xe4,0x00,0x01,0x00,0x00])
+                            data_normal_mode = bytearray([0x42,0x4d,0xe4,0x00,0x01,0x00,0x00])
+                            data_standby_mode = bytearray([0x42,0x4d,0xe4,0x00,0x00,0x00,0x00])
+                            data_passive_mode = bytearray([0x42,0x4d,0xe1,0x00,0x00,0x00,0x00])
+                            data_active_mode = bytearray([0x42,0x4d,0xe1,0x00,0x01,0x00,0x00])
+                            data_passive_read_mode = bytearray([0x42,0x4d,0xe2,0x00,0x00,0x00,0x00])
+                            data = data_standby_mode
                             check_sum = 0x00
                             for x in data[:-2]:
                                 check_sum += x
