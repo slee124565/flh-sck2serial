@@ -9,7 +9,6 @@
 import sys
 import socket
 import serial
-import serial.rs485
 import serial.threaded
 import time
 
@@ -27,7 +26,7 @@ class SerialToNet(serial.threaded.Protocol):
         if self.socket is not None:
             data_hex = ','.join('{:02x}'.format(ord(x)) for x in data)
             sys.stderr.write('data_received hex string %s\n' % data_hex)
-            #self.socket.sendall(data)
+            self.socket.sendall(data)
 
 
 if __name__ == '__main__':  # noqa
@@ -52,7 +51,7 @@ it waits for the next connect.
         type=int,
         nargs='?',
         help='set baud rate, default: %(default)s',
-        default=19200)
+        default=9600)
 
     parser.add_argument(
         '-q', '--quiet',
@@ -118,14 +117,11 @@ it waits for the next connect.
     args = parser.parse_args()
 
     # connect to serial port
-    #ser = serial.serial_for_url(args.SERIALPORT, do_not_open=True)
-    ser = serial.rs485.RS485()
-    ser.port = args.SERIALPORT
+    ser = serial.serial_for_url(args.SERIALPORT, do_not_open=True)
     ser.baudrate = args.BAUDRATE
     ser.parity = args.parity
     ser.rtscts = args.rtscts
     ser.xonxoff = args.xonxoff
-    ser.rs485_mode = serial.rs485.RS485Settings()
 
     if args.rts is not None:
         ser.rts = args.rts
@@ -188,14 +184,22 @@ it waits for the next connect.
                 while True:
                     try:
                         data = client_socket.recv(1024)
-                        if not data:
-                            break
+                        data_preamble = [0x55] *6
+                        data_header = 0xa8
+                        data_high = 0b01000000
+                        data_low = 0b01000011
+                        data_check = 0b00000011
                         if data == '\r\n':
-                            sys.stderr.write('send door status check command\n')
-                            data = bytearray([0x05,0x91,0x01,0x11,0x81,0x0f])                             
-                            data_hex = ','.join('{:02x}'.format(x) for x in data)
-                            sys.stderr.write('client_socket.recv: %s\n' % data_hex)
-                            #ser.write(data)                 # get a bunch of bytes and send them
+                            data = data_preamble
+                            data_hex = ','.join('{:02x}'.format(ord(x)) for x in data)
+                            sys.stderr.write('send v5 data:%s' % data_hex)
+                            ser.write(data)
+                            time.sleep(170/1000000)
+                            ser.write(bytearray([data_header,data_high,data_low,data_check]))
+#                        if not data:
+#                            break
+#                        sys.stderr.write('sck data recv: %s\n' % data_hex)
+                        #ser.write(data+'\r\n')                 # get a bunch of bytes and send them
                     except socket.error as msg:
                         if args.develop:
                             raise
