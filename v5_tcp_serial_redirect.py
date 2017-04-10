@@ -199,8 +199,8 @@ it waits for the next connect.
                         else:
                             data_hex = ','.join('{:02x}'.format(ord(x)) for x in data)
                             sys.stderr.write('recv sck data: %s' % data_hex)
-#                        if not data:
-#                            break
+                        if not data:
+                            break
 #                        sys.stderr.write('sck data recv: %s\n' % data_hex)
                         #ser.write(data+'\r\n')                 # get a bunch of bytes and send them
                     except socket.error as msg:
