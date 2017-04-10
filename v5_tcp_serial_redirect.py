@@ -194,7 +194,7 @@ it waits for the next connect.
                             data_hex = ','.join('{:02x}'.format(x) for x in data)
                             sys.stderr.write('send v5 data:%s\n' % data_hex)
                             ser.write(bytearray(data))
-                            time.sleep(170/1000000)
+                            time.sleep(170*1/1000000)
                             #ser.write(bytearray([data_header,data_high,data_low,data_check]))
                             data = [data_header,data_high,data_low,data_check]
                             data_hex = ','.join('{:02x}'.format(x) for x in data)
