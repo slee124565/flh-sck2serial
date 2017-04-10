@@ -189,6 +189,13 @@ it waits for the next connect.
                         data_high = 0b01000000
                         data_low = 0b01000011
                         data_check = 0b00000011
+                        data_test = [].append(data_preamble)
+                        data_test.append(00)
+                        data_test.append(00)
+                        data_test.append(data_header)
+                        data_test.append(data_high)
+                        data_test.append(data_low)
+                        data_test.append(data_check)
                         if data == '\r\n':
                             data = data_preamble
                             data_hex = ','.join('{:02x}'.format(x) for x in data)
@@ -200,6 +207,11 @@ it waits for the next connect.
                             data_hex = ','.join('{:02x}'.format(x) for x in data)
                             ser.write(bytearray(data))
                             sys.stderr.write('cmd byte %s sent\n' % data_hex)
+                        elif data == 'a\r\n':
+                            data = data_test
+                            data_hex = ','.join('{:02x}'.format(x) for x in data)
+                            sys.stderr.write('send v5 data:%s\n' % data_hex)
+                            ser.write(bytearray(data))
                         else:
                             data_hex = ','.join('{:02x}'.format(x) for x in data)
                             sys.stderr.write('recv sck data: %s' % data_hex)
