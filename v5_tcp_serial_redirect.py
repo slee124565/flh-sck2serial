@@ -196,8 +196,10 @@ it waits for the next connect.
                             ser.write(bytearray(data))
                             time.sleep(170/1000000)
                             #ser.write(bytearray([data_header,data_high,data_low,data_check]))
-                            ser.write(bytearray([data_header]))
-                            sys.stderr.write('cmd sent\n')
+                            data = [data_header,data_high,data_low,data_check]
+                            data_hex = ','.join('{:02x}'.format(x) for x in data)
+                            ser.write(bytearray(data))
+                            sys.stderr.write('cmd byte %s sent\n' % data_hex)
                         else:
                             data_hex = ','.join('{:02x}'.format(x) for x in data)
                             sys.stderr.write('recv sck data: %s' % data_hex)
