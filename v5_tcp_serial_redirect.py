@@ -51,7 +51,7 @@ it waits for the next connect.
         type=int,
         nargs='?',
         help='set baud rate, default: %(default)s',
-        default=9600)
+        default=115200)
 
     parser.add_argument(
         '-q', '--quiet',
@@ -191,17 +191,19 @@ it waits for the next connect.
                         data_check = 0b00000011
                         if data == '\r\n':
                             data = data_preamble
-                            data_hex = ','.join('{:02x}'.format(ord(x)) for x in data)
-                            sys.stderr.write('send v5 data:%s' % data_hex)
-                            ser.write(data)
+                            data_hex = ','.join('{:02x}'.format(x) for x in data)
+                            sys.stderr.write('send v5 data:%s\n' % data_hex)
+                            ser.write(bytearray(data))
                             time.sleep(170/1000000)
-                            ser.write(bytearray([data_header,data_high,data_low,data_check]))
+                            #ser.write(bytearray([data_header,data_high,data_low,data_check]))
+                            ser.write(bytearray([data_header]))
+                            sys.stderr.write('cmd sent\n')
                         else:
-                            data_hex = ','.join('{:02x}'.format(ord(x)) for x in data)
+                            data_hex = ','.join('{:02x}'.format(x) for x in data)
                             sys.stderr.write('recv sck data: %s' % data_hex)
+                        #client_socket.close()
                         if not data:
                             break
-#                        sys.stderr.write('sck data recv: %s\n' % data_hex)
                         #ser.write(data+'\r\n')                 # get a bunch of bytes and send them
                     except socket.error as msg:
                         if args.develop:
