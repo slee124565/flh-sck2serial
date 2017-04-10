@@ -196,6 +196,9 @@ it waits for the next connect.
                             ser.write(data)
                             time.sleep(170/1000000)
                             ser.write(bytearray([data_header,data_high,data_low,data_check]))
+                        else:
+                            data_hex = ','.join('{:02x}'.format(ord(x)) for x in data)
+                            sys.stderr.write('recv sck data: %s' % data_hex)
 #                        if not data:
 #                            break
 #                        sys.stderr.write('sck data recv: %s\n' % data_hex)
