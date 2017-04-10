@@ -28,11 +28,11 @@ class SerialToNet(serial.threaded.Protocol):
             for x in data:
                 self.data_buffer.append(ord(x))
             if len(self.data_buffer) >= 32:
-                output_hex = ','.join('{:02x}'.format(x) for x in self.data_buffer[:32])
-                sys.stderr.write('pms output: %s' % output_hex)
+                output_hex = ','.join('0x{:02x}'.format(x) for x in self.data_buffer[:32])
+                sys.stderr.write('pms output: %s\n' % output_hex)
                 self.data_buffer = self.data_buffer[32:]
                 keep_hex = ','.join('{:02x}'.format(x) for x in self.data_buffer)
-                sys.stderr.write('keep hex: %s' % keep_hex)
+                sys.stderr.write('keep hex: %s\n' % keep_hex)
             self.socket.sendall(data)
 
 
@@ -58,7 +58,7 @@ it waits for the next connect.
         type=int,
         nargs='?',
         help='set baud rate, default: %(default)s',
-        default=19200)
+        default=9600)
 
     parser.add_argument(
         '-q', '--quiet',
@@ -194,13 +194,23 @@ it waits for the next connect.
                         if not data:
                             break
                         if data == '\r\n':
-                            sys.stderr.write('set normal mode command\n')
-                            data_normal_mode = bytearray([0x42,0x4d,0xe4,0x00,0x01,0x00,0x00])
-                            data_standby_mode = bytearray([0x42,0x4d,0xe4,0x00,0x00,0x00,0x00])
-                            data_passive_mode = bytearray([0x42,0x4d,0xe1,0x00,0x00,0x00,0x00])
-                            data_active_mode = bytearray([0x42,0x4d,0xe1,0x00,0x01,0x00,0x00])
-                            data_passive_read_mode = bytearray([0x42,0x4d,0xe2,0x00,0x00,0x00,0x00])
-                            data = data_standby_mode
+                            #-> normal mode
+                            #data = bytearray([0x42,0x4d,0xe4,0x00,0x01,0x00,0x00])
+                            #mode_txt = 'normal mode'
+                            #-> standby mode
+                            #data = bytearray([0x42,0x4d,0xe4,0x00,0x00,0x00,0x00])
+                            #txt = 'standby mode'
+                            #-> passive mode
+                            #data = bytearray([0x42,0x4d,0xe1,0x00,0x00,0x00,0x00])
+                            #txt = 'passive mode'
+                            #-> active mode
+                            #data_active_mode = bytearray([0x42,0x4d,0xe1,0x00,0x01,0x00,0x00])
+                            #txt = 'active mode'
+                            #-> passive read mode
+                            data = bytearray([0x42,0x4d,0xe2,0x00,0x00,0x00,0x00])
+                            txt = 'passive read mode'
+                            
+                            sys.stderr.write('set %s command\n' % txt)
                             check_sum = 0x00
                             for x in data[:-2]:
                                 check_sum += x

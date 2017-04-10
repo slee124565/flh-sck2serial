@@ -27,7 +27,7 @@ class SerialToNet(serial.threaded.Protocol):
         if self.socket is not None:
             data_hex = ','.join('{:02x}'.format(ord(x)) for x in data)
             sys.stderr.write('data_received hex string %s\n' % data_hex)
-            self.socket.sendall(data)
+            #self.socket.sendall(data)
 
 
 if __name__ == '__main__':  # noqa
@@ -192,11 +192,10 @@ it waits for the next connect.
                             break
                         if data == '\r\n':
                             sys.stderr.write('send door status check command\n')
-                            data = bytearray([0x05,0x91,0x01,0x11,0x81,0x0f]) 
-                            
-                        data_hex = ','.join('{:02x}'.format(x) for x in data)
-                        sys.stderr.write('client_socket.recv: %s\n' % data_hex)
-                        ser.write(data)                 # get a bunch of bytes and send them
+                            data = bytearray([0x05,0x91,0x01,0x11,0x81,0x0f])                             
+                            data_hex = ','.join('{:02x}'.format(x) for x in data)
+                            sys.stderr.write('client_socket.recv: %s\n' % data_hex)
+                            #ser.write(data)                 # get a bunch of bytes and send them
                     except socket.error as msg:
                         if args.develop:
                             raise
